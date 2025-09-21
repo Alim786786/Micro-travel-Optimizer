@@ -11,6 +11,7 @@ output = replicate.run(
     input={"prompt": "Write a short motivational quote.", "max_tokens": 50}
 )
 print("poop")
+print("no")
 # Join chunks into one string
 result = "".join(output).strip()
 print("AI says:", result)
