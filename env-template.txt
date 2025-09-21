@@ -1,0 +1,11 @@
+# Replicate API
+REPLICATE_API_TOKEN=
+
+# Routing Provider (ors|mapbox)
+ROUTING_PROVIDER=ors
+
+# OpenRouteService API
+ORS_API_KEY=
+
+# Mapbox API
+MAPBOX_TOKEN=
