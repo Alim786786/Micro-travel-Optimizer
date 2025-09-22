@@ -1,5 +1,5 @@
 import { Constraint, Stop, Leg, Plan, StopRef } from '../schema'
-import { PreferenceWeights } from '../../types/planner'
+import { PreferenceWeights } from '../../types/planner.d.ts'
 import { addMinutes, formatTime, parseTime } from '../schema'
 
 export interface OptimizationContext {

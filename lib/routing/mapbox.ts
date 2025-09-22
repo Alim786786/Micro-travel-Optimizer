@@ -1,4 +1,4 @@
-import { RoutingProvider, GeocodeResult, TravelTimeResult } from '../../types/planner'
+import { RoutingProvider, GeocodeResult, TravelTimeResult } from '../../types/planner.d.ts'
 
 export class MapboxProvider implements RoutingProvider {
   private accessToken: string

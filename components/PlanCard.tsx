@@ -36,21 +36,33 @@ export default function PlanCard({ plan, explanation }: PlanCardProps) {
   return (
     <div className="space-y-6">
       {/* Main Plan */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-start mb-4">
-          <h2 className="text-xl font-semibold">Your Optimized Plan</h2>
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-8">
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-3">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">Your Optimized Plan</h2>
+          </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               {formatDuration(plan.plan.total_minutes)}
             </div>
-            <div className="text-sm text-gray-500">Total Time</div>
+            <div className="text-sm font-medium text-gray-500">Total Time</div>
           </div>
         </div>
 
         {plan.plan.feasibility_notes && (
-          <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-            <div className="font-medium">Notes:</div>
-            <ul className="list-disc list-inside text-sm">
+          <div className="mb-6 p-4 bg-amber-50 border-2 border-amber-200 text-amber-800 rounded-xl">
+            <div className="flex items-center mb-2">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="font-semibold">Important Notes:</div>
+            </div>
+            <ul className="list-disc list-inside text-sm space-y-1">
               {plan.plan.feasibility_notes.map((note, index) => (
                 <li key={index}>{note}</li>
               ))}
@@ -58,27 +70,34 @@ export default function PlanCard({ plan, explanation }: PlanCardProps) {
           </div>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {plan.plan.legs.map((leg, index) => (
-            <div key={index} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+            <div key={index} className="flex items-center space-x-4 p-4 bg-white/60 backdrop-blur-sm border-2 border-gray-200/50 rounded-xl hover:border-blue-300/50 transition-all duration-200">
               <div className="flex-shrink-0">
-                <span className="text-2xl">{getModeIcon(leg.mode)}</span>
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">{getModeIcon(leg.mode)}</span>
+                </div>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">{leg.from.name}</span>
-                  <span className="text-gray-400">→</span>
-                  <span className="font-medium">{leg.to.name}</span>
+                <div className="flex items-center space-x-3 mb-1">
+                  <span className="font-semibold text-gray-800">{leg.from.name}</span>
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                  <span className="font-semibold text-gray-800">{leg.to.name}</span>
                 </div>
-                <div className="text-sm text-gray-600">
-                  {leg.depart_time} - {leg.arrive_time} ({formatDuration(leg.minutes)})
+                <div className="text-sm text-gray-600 mb-1">
+                  <span className="font-medium">{leg.depart_time}</span> - <span className="font-medium">{leg.arrive_time}</span>
+                  <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                    {formatDuration(leg.minutes)}
+                  </span>
                 </div>
                 {leg.notes && (
-                  <div className="text-xs text-gray-500">{leg.notes}</div>
+                  <div className="text-xs text-gray-500 italic">{leg.notes}</div>
                 )}
               </div>
               <div className="flex-shrink-0">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getModeColor(leg.mode)}`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getModeColor(leg.mode)}`}>
                   {leg.mode}
                 </span>
               </div>
@@ -89,23 +108,34 @@ export default function PlanCard({ plan, explanation }: PlanCardProps) {
 
       {/* Alternatives */}
       {(plan.alternatives.faster || plan.alternatives.cheaper) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {plan.alternatives.faster && (
-            <div className="bg-white rounded-lg shadow-md p-4">
-              <h3 className="font-semibold text-green-600 mb-2">⚡ Faster Alternative</h3>
-              <div className="text-sm text-gray-600 mb-2">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-green-600">⚡ Faster Alternative</h3>
+              </div>
+              <div className="text-lg font-bold text-green-600 mb-4">
                 {formatDuration(plan.alternatives.faster.total_minutes)} total
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {plan.alternatives.faster.legs.slice(0, 3).map((leg, index) => (
-                  <div key={index} className="flex items-center space-x-2 text-sm">
-                    <span>{getModeIcon(leg.mode)}</span>
-                    <span>{leg.from.name} → {leg.to.name}</span>
-                    <span className="text-gray-500">({formatDuration(leg.minutes)})</span>
+                  <div key={index} className="flex items-center space-x-3 text-sm">
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                      <span className="text-lg">{getModeIcon(leg.mode)}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">{leg.from.name} → {leg.to.name}</div>
+                      <div className="text-xs text-gray-500">{formatDuration(leg.minutes)}</div>
+                    </div>
                   </div>
                 ))}
                 {plan.alternatives.faster.legs.length > 3 && (
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block">
                     +{plan.alternatives.faster.legs.length - 3} more stops
                   </div>
                 )}
@@ -114,21 +144,32 @@ export default function PlanCard({ plan, explanation }: PlanCardProps) {
           )}
 
           {plan.alternatives.cheaper && (
-            <div className="bg-white rounded-lg shadow-md p-4">
-              <h3 className="font-semibold text-blue-600 mb-2">💰 Cheaper Alternative</h3>
-              <div className="text-sm text-gray-600 mb-2">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-blue-600">💰 Cheaper Alternative</h3>
+              </div>
+              <div className="text-lg font-bold text-blue-600 mb-4">
                 {formatDuration(plan.alternatives.cheaper.total_minutes)} total
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {plan.alternatives.cheaper.legs.slice(0, 3).map((leg, index) => (
-                  <div key={index} className="flex items-center space-x-2 text-sm">
-                    <span>{getModeIcon(leg.mode)}</span>
-                    <span>{leg.from.name} → {leg.to.name}</span>
-                    <span className="text-gray-500">({formatDuration(leg.minutes)})</span>
+                  <div key={index} className="flex items-center space-x-3 text-sm">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <span className="text-lg">{getModeIcon(leg.mode)}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">{leg.from.name} → {leg.to.name}</div>
+                      <div className="text-xs text-gray-500">{formatDuration(leg.minutes)}</div>
+                    </div>
                   </div>
                 ))}
                 {plan.alternatives.cheaper.legs.length > 3 && (
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block">
                     +{plan.alternatives.cheaper.legs.length - 3} more stops
                   </div>
                 )}
@@ -140,12 +181,21 @@ export default function PlanCard({ plan, explanation }: PlanCardProps) {
 
       {/* Explanation */}
       {explanation && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="font-semibold mb-3">Plan Summary</h3>
-          <div className="prose prose-sm max-w-none">
-            <pre className="whitespace-pre-wrap text-sm text-gray-700">
-              {explanation}
-            </pre>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-8">
+          <div className="flex items-center mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-3">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-800">Plan Summary</h3>
+          </div>
+          <div className="prose prose-lg max-w-none">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-gray-200/50">
+              <div className="text-gray-800 leading-relaxed font-medium whitespace-pre-wrap text-base">
+                {explanation}
+              </div>
+            </div>
           </div>
         </div>
       )}

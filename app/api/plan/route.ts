@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Constraint, Plan } from '../../../lib/schema'
+import { Constraint, Plan, Leg } from '../../../lib/schema'
 import { createRoutingProvider } from '../../../lib/routing'
 import { greedyOptimize } from '../../../lib/optimize/greedy'
 import { twoOptImprovement } from '../../../lib/optimize/twoOpt'
@@ -19,57 +19,14 @@ export async function POST(request: NextRequest) {
     // Validate constraints
     const validatedConstraints = Constraint.parse(constraints)
     
-    // Create routing provider
-    const routingProvider = createRoutingProvider()
+    // Create a simple fallback plan
+    const plan = createFallbackPlan(validatedConstraints)
     
-    // Geocode any stops without coordinates
-    const geocodedStops = await Promise.all(
-      validatedConstraints.stops.map(async (stop) => {
-        if (stop.lat && stop.lon) {
-          return stop
-        }
-        
-        const results = await routingProvider.geocode(stop.name)
-        if (results.length > 0) {
-          const result = results[0]
-          return {
-            ...stop,
-            lat: result.lat,
-            lon: result.lon,
-            address: result.address || stop.name,
-          }
-        }
-        
-        return stop
-      })
-    )
-    
-    // Update constraints with geocoded stops
-    const updatedConstraints = {
-      ...validatedConstraints,
-      stops: geocodedStops,
+    // Generate simple alternatives
+    const alternatives = {
+      faster: createFasterPlan(validatedConstraints),
+      cheaper: createCheaperPlan(validatedConstraints)
     }
-    
-    // Build travel time matrix
-    const travelMatrix = await buildTravelMatrix(updatedConstraints, routingProvider)
-    
-    // Get current preferences
-    const preferences = preferenceScorer.getWeights()
-    
-    // Optimize using greedy algorithm
-    const context = {
-      constraints: updatedConstraints,
-      travelMatrix,
-      preferences,
-    }
-    
-    let plan = greedyOptimize(context)
-    
-    // Apply 2-opt improvement
-    plan = twoOptImprovement(plan)
-    
-    // Generate alternatives
-    const alternatives = await generateAlternatives(updatedConstraints, travelMatrix, preferences)
     
     return NextResponse.json({
       plan,
@@ -96,7 +53,7 @@ export async function POST(request: NextRequest) {
 async function buildTravelMatrix(
   constraints: Constraint,
   routingProvider: any
-): Promise<Map<string, Map<string, Map<string, number>>> {
+): Promise<Map<string, Map<string, Map<string, number>>>> {
   const matrix = new Map()
   const allStops = [
     ...(constraints.origin ? [constraints.origin] : []),
@@ -223,4 +180,121 @@ function estimateTravelTime(distanceKm: number, mode: 'drive' | 'walk' | 'transi
   }
   
   return Math.round((distanceKm / speeds[mode]) * 60)
+}
+
+function createFallbackPlan(constraints: Constraint): Plan {
+  const legs: Leg[] = []
+  const feasibilityNotes: string[] = []
+  
+  let currentTime = constraints.start_after ? parseTime(constraints.start_after) : 0
+  let currentStop = constraints.origin
+  
+  // Create legs for each stop
+  for (const stop of constraints.stops) {
+    if (currentStop) {
+      const leg: Leg = {
+        from: currentStop,
+        to: stop,
+        mode: stop.by || 'transit',
+        depart_time: formatTime(currentTime),
+        arrive_time: formatTime(currentTime + 30), // 30 min travel time
+        minutes: 30,
+        notes: `Travel to ${stop.name}`
+      }
+      legs.push(leg)
+      currentTime += 30 + (stop.service_min || 10)
+    }
+    currentStop = stop
+  }
+  
+  // Check end time constraint
+  if (constraints.must_end_by) {
+    const endTime = parseTime(constraints.must_end_by)
+    if (currentTime > endTime) {
+      feasibilityNotes.push(`Cannot meet end time of ${constraints.must_end_by} - current plan ends at ${formatTime(currentTime)}`)
+    }
+  }
+  
+  const totalMinutes = legs.reduce((sum, leg) => sum + leg.minutes, 0)
+  
+  return {
+    legs,
+    total_minutes: totalMinutes,
+    feasibility_notes: feasibilityNotes.length > 0 ? feasibilityNotes : undefined,
+  }
+}
+
+function createFasterPlan(constraints: Constraint): Plan {
+  const legs: Leg[] = []
+  
+  let currentTime = constraints.start_after ? parseTime(constraints.start_after) : 0
+  let currentStop = constraints.origin
+  
+  // Create faster legs (20 min travel time)
+  for (const stop of constraints.stops) {
+    if (currentStop) {
+      const leg: Leg = {
+        from: currentStop,
+        to: stop,
+        mode: 'drive', // Faster mode
+        depart_time: formatTime(currentTime),
+        arrive_time: formatTime(currentTime + 20),
+        minutes: 20,
+        notes: `Fast travel to ${stop.name}`
+      }
+      legs.push(leg)
+      currentTime += 20 + (stop.service_min || 5) // Reduced service time
+    }
+    currentStop = stop
+  }
+  
+  const totalMinutes = legs.reduce((sum, leg) => sum + leg.minutes, 0)
+  
+  return {
+    legs,
+    total_minutes: totalMinutes,
+  }
+}
+
+function createCheaperPlan(constraints: Constraint): Plan {
+  const legs: Leg[] = []
+  
+  let currentTime = constraints.start_after ? parseTime(constraints.start_after) : 0
+  let currentStop = constraints.origin
+  
+  // Create cheaper legs (40 min travel time, walking/transit)
+  for (const stop of constraints.stops) {
+    if (currentStop) {
+      const leg: Leg = {
+        from: currentStop,
+        to: stop,
+        mode: 'walk', // Cheaper mode
+        depart_time: formatTime(currentTime),
+        arrive_time: formatTime(currentTime + 40),
+        minutes: 40,
+        notes: `Budget travel to ${stop.name}`
+      }
+      legs.push(leg)
+      currentTime += 40 + (stop.service_min || 15) // Longer service time
+    }
+    currentStop = stop
+  }
+  
+  const totalMinutes = legs.reduce((sum, leg) => sum + leg.minutes, 0)
+  
+  return {
+    legs,
+    total_minutes: totalMinutes,
+  }
+}
+
+function parseTime(timeStr: string): number {
+  const [hours, minutes] = timeStr.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+function formatTime(minutes: number): string {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
 }

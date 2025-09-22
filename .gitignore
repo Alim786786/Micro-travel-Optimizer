@@ -1,6 +1,15 @@
 # Ignore environment files (API keys, secrets)
 .env
+.env.local
+.env.*
+!.env.example
 
 # Ignore Python cache files/folders
 __pycache__/
 *.pyc
+.venv/
+venv/
+
+node_modules/
+.next/
+dist/

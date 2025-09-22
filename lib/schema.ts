@@ -12,7 +12,7 @@ export const Stop = StopRef.extend({
   by: z.enum(['transit', 'drive', 'walk']).nullable().optional(),
   arrive_window: z.tuple([z.string(), z.string()]).nullable().optional(),
   service_min: z.number().nullable().optional(),
-  priority: z.enum([1, 2, 3]).nullable().optional(),
+  priority: z.number().min(1).max(3).nullable().optional(),
 })
 
 export const Preferences = z.object({
