@@ -2,6 +2,8 @@
 
 import { PlanWithAlternatives, Leg } from '../lib/schema'
 import { formatTime, parseTime } from '../lib/schema'
+import { appendTelemetry } from '../lib/personalization/store'
+import { getPrimaryMode, getTotalDistanceMeters } from '../lib/personalization/utils'
 
 interface PlanCardProps {
   plan: PlanWithAlternatives
@@ -13,6 +15,29 @@ export default function PlanCard({ plan, explanation }: PlanCardProps) {
     const hours = Math.floor(minutes / 60)
     const mins = minutes % 60
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
+  }
+
+  const handleUsePlan = () => {
+    try {
+      const primaryMode = getPrimaryMode(plan.plan)
+      const totalDistance = getTotalDistanceMeters(plan.plan)
+      
+      appendTelemetry({
+        ts: Date.now(),
+        event: "plan_chosen",
+        chosen_mode: primaryMode,
+        distance_m: totalDistance,
+        context: {
+          total_minutes: plan.plan.total_minutes,
+          leg_count: plan.plan.legs.length,
+          has_alternatives: !!(plan.alternatives.faster || plan.alternatives.cheaper)
+        }
+      })
+      
+      console.log('Plan selected and telemetry recorded')
+    } catch (error) {
+      console.warn('Failed to record plan selection telemetry:', error)
+    }
   }
 
   const getModeIcon = (mode: string) => {
@@ -103,6 +128,21 @@ export default function PlanCard({ plan, explanation }: PlanCardProps) {
               </div>
             </div>
           ))}
+        </div>
+        
+        {/* Use This Plan Button */}
+        <div className="mt-6 pt-6 border-t border-gray-200/50">
+          <button
+            onClick={handleUsePlan}
+            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-8 rounded-xl font-semibold text-lg hover:from-green-700 hover:to-emerald-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
+            <div className="flex items-center justify-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Use This Plan
+            </div>
+          </button>
         </div>
       </div>
 

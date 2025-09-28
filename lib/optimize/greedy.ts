@@ -1,6 +1,7 @@
 import { Constraint, Stop, Leg, Plan, StopRef } from '../schema'
 import { PreferenceWeights } from '../../types/planner.d.ts'
 import { addMinutes, formatTime, parseTime } from '../schema'
+import { applyPersonalization } from '../scoring'
 
 export interface OptimizationContext {
   constraints: Constraint
@@ -60,13 +61,20 @@ export function greedyOptimize(context: OptimizationContext): Plan {
         if (travelTime === 0) continue
         
         const arrivalTime = currentTime + travelTime
-        const score = calculateStopScore(
+        const baseScore = calculateStopScore(
           stop,
           arrivalTime,
           travelTime,
           mode,
           preferences
         )
+        
+        // Apply personalization based on user's mode preferences
+        const distance_m = calculateDistance(
+          currentLocation || { lat: 0, lon: 0 },
+          { lat: stop.lat || 0, lon: stop.lon || 0 }
+        )
+        const score = applyPersonalization(baseScore, mode, distance_m)
         
         if (score < bestScore) {
           bestScore = score
@@ -183,4 +191,29 @@ function getLegNotes(mode: 'transit' | 'drive' | 'walk', stop: Stop): string {
   }
   
   return notes.join(' • ')
+}
+
+/**
+ * Calculate distance between two points using Haversine formula
+ * Returns distance in meters
+ */
+function calculateDistance(
+  from: { lat: number; lon: number },
+  to: { lat: number; lon: number }
+): number {
+  const R = 6371000 // Earth's radius in meters
+  const dLat = toRadians(to.lat - from.lat)
+  const dLon = toRadians(to.lon - from.lon)
+  
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(from.lat)) * Math.cos(toRadians(to.lat)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  
+  return R * c
+}
+
+function toRadians(degrees: number): number {
+  return degrees * (Math.PI / 180)
 }

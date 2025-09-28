@@ -1,4 +1,28 @@
 import { PreferenceWeights } from '../types/planner'
+import { TravelMode } from './personalization/types'
+import { getModeWeight } from './personalization/model'
+import { PERSONALIZATION_ENABLED } from './config'
+
+/**
+ * Apply personalization to a base score based on user's mode preferences
+ * @param baseScore - The original score for this mode/distance combination
+ * @param mode - The transportation mode
+ * @param distance_m - Distance in meters
+ * @returns Modified score with personalization applied
+ */
+export function applyPersonalization(baseScore: number, mode: TravelMode, distance_m: number): number {
+  if (!PERSONALIZATION_ENABLED) {
+    return baseScore
+  }
+  
+  try {
+    const weight = getModeWeight(mode, distance_m)
+    return baseScore * weight
+  } catch (error) {
+    console.warn('Failed to apply personalization:', error)
+    return baseScore
+  }
+}
 
 export class PreferenceScorer {
   private weights: PreferenceWeights

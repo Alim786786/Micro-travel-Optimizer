@@ -6,6 +6,8 @@ import StopsEditor from '../components/StopsEditor'
 import PlanCard from '../components/PlanCard'
 import MapView from '../components/MapView'
 import PreferenceToggles from '../components/PreferenceToggles'
+import TelemetryDemo from '../components/TelemetryDemo'
+import PersonalizationPanel from '../components/PersonalizationPanel'
 import { Constraint, Plan, PlanWithAlternatives } from '../lib/schema'
 
 export default function Home() {
@@ -164,6 +166,12 @@ export default function Home() {
                 constraints={constraints}
               />
             )}
+            
+            {/* Telemetry Dashboard - Always visible for demo */}
+            <TelemetryDemo />
+            
+            {/* Personalization Panel */}
+            <PersonalizationPanel />
           </div>
         </div>
       </div>

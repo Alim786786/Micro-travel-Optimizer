@@ -1,6 +1,7 @@
 'use client'
 
 import { Constraint, Stop } from '../lib/schema'
+import { appendTelemetry } from '../lib/personalization/store'
 
 interface StopsEditorProps {
   constraints: Constraint
@@ -9,9 +10,28 @@ interface StopsEditorProps {
 
 export default function StopsEditor({ constraints, onChange }: StopsEditorProps) {
   const updateStop = (index: number, field: keyof Stop, value: any) => {
+    const oldStop = constraints.stops[index]
     const newStops = [...constraints.stops]
     newStops[index] = { ...newStops[index], [field]: value }
     onChange({ ...constraints, stops: newStops })
+    
+    // Record telemetry for mode overrides
+    if (field === 'by' && value && value !== oldStop.by) {
+      try {
+        appendTelemetry({
+          ts: Date.now(),
+          event: "mode_overridden",
+          chosen_mode: value as any,
+          context: {
+            stop_name: newStops[index].name || `Stop ${index + 1}`,
+            stop_index: index,
+            previous_mode: oldStop.by
+          }
+        })
+      } catch (error) {
+        console.warn('Failed to record mode override telemetry:', error)
+      }
+    }
   }
 
   const formatTimeForDisplay = (timeStr: string): string => {
